@@ -4,61 +4,64 @@ import classes from './AuthForm.module.css';
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
-    setError(null);
   };
 
-  const submitHandler = async (event) => {
+  const submitHandler = (event) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
 
+    setIsLoading(true);
+
     let url;
 
     if (isLogin) {
-      // LOGIN URL
+      // ✅ Login API URL
       url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyC44GiGCfzmvLH1iqYKqsyHuOjHYrEG_b0';
     } else {
-      // SIGNUP URL
+      // ✅ Signup API URL
       url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyC44GiGCfzmvLH1iqYKqsyHuOjHYrEG_b0';
     }
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify({
-          email: enteredEmail,
-          password: enteredPassword,
-          returnSecureToken: true,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        email: enteredEmail,
+        password: enteredPassword,
+        returnSecureToken: true,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => {
+        setIsLoading(false);
+        if (res.ok) {
+          return res.json();
+        } else {
+          return res.json().then((data) => {
+            let errorMessage = 'Authentication failed!';
+            alert(errorMessage);
+            throw new Error(errorMessage);
+          });
+        }
+      })
+      .then((data) => {
+        console.log(data);
+        if (isLogin) {
+          // ✅ Console log JWT idToken for login
+          console.log('Login successful. JWT idToken:', data.idToken);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error.message || 'Authentication failed!');
-      }
-
-      console.log('Success:', data);
-      // You can redirect or store token here if needed
-
-    } catch (err) {
-      setError(err.message);
-    }
-
-    setIsLoading(false);
   };
 
   return (
@@ -71,18 +74,10 @@ const AuthForm = () => {
         </div>
         <div className={classes.control}>
           <label htmlFor='password'>Your Password</label>
-          <input
-            type='password'
-            id='password'
-            required
-            ref={passwordInputRef}
-          />
+          <input type='password' id='password' required ref={passwordInputRef} />
         </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
         <div className={classes.actions}>
-          {!isLoading && (
-            <button>{isLogin ? 'Login' : 'Create Account'}</button>
-          )}
+          {!isLoading && <button>{isLogin ? 'Login' : 'Create Account'}</button>}
           {isLoading && <p>Sending request...</p>}
           <button
             type='button'
