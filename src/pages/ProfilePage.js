@@ -1,7 +1,19 @@
-import UserProfile from '../components/profile/user-profile';
+import { useContext } from 'react';
+import AuthContext from '../store/auth-context';
 
-const ProfilePage = () => {
-  return <UserProfile />;
+const Profile = () => {
+  const authCtx = useContext(AuthContext);
+
+  const logoutHandler = () => {
+    authCtx.logout();
+  };
+
+  return (
+    <section>
+      <h1>Welcome to your Profile</h1>
+      <button onClick={logoutHandler}>Logout</button>
+    </section>
+  );
 };
 
-export default ProfilePage;
+export default Profile;

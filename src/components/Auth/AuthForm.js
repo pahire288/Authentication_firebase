@@ -1,11 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useContext } from 'react';
+import { useHistory } from 'react-router-dom';
 import classes from './AuthForm.module.css';
+import AuthContext from '../../store/auth-context';
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
+  const authCtx = useContext(AuthContext);
+  const history = useHistory();
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
@@ -47,6 +51,9 @@ const AuthForm = () => {
         } else {
           return res.json().then((data) => {
             let errorMessage = 'Authentication failed!';
+            if (data && data.error && data.error.message) {
+              errorMessage = data.error.message;
+            }
             alert(errorMessage);
             throw new Error(errorMessage);
           });
@@ -55,8 +62,13 @@ const AuthForm = () => {
       .then((data) => {
         console.log(data);
         if (isLogin) {
-          // ✅ Console log JWT idToken for login
+          // ✅ Store token in context
+          authCtx.login(data.idToken);
           console.log('Login successful. JWT idToken:', data.idToken);
+          history.replace('/profile'); // Redirect to profile after login
+        } else {
+          alert('Signup successful! You can now login.');
+          setIsLogin(true); // Switch to login mode after signup
         }
       })
       .catch((err) => {
